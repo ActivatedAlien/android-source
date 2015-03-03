@@ -6,4 +6,10 @@
         <item name="android:windowBackground">@color/windowBackground</item>
     </style>
 
+    <style name="TextViewTheme" parent="android:Theme.Light">
+        <!-- Window Background -->
+        <item name="android:windowBackground">@color/black_87</item>
+        <item name="android:textColor">@color/accent</item>
+    </style>
+
 </resources>
