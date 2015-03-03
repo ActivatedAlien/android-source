@@ -6,7 +6,7 @@ import javax.imageio.*;
 import java.awt.image.BufferedImage;
 
 public class ImageGetter extends Thread {
-	private String url;
+	private URL url;
 	private boolean openWhenCompleted;
 
 	/*
@@ -26,7 +26,13 @@ public class ImageGetter extends Thread {
  	 *	behavior as described above.
 	/************************************************/
 	public ImageGetter(String url, boolean openWhenCompleted) {
-		this.url = url;
+		try {
+			this.url = new URL(url);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
 		this.openWhenCompleted = openWhenCompleted;
 	}
 
@@ -42,7 +48,7 @@ public class ImageGetter extends Thread {
 			if (existingImage.exists()) {
 				existingImage.delete();
 			}
-			BufferedImage bufferedImage = ImageIO.read(url); // WHY ISN'T THIS WORKING
+			BufferedImage bufferedImage = ImageIO.read(url);
 			File outputfile = new File("google_logo.png");
 			ImageIO.write(bufferedImage, "png", outputfile);
 			if (openWhenCompleted) {
