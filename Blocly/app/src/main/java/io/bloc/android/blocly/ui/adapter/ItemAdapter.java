@@ -49,6 +49,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
 
     class ItemAdapterViewHolder extends RecyclerView.ViewHolder implements ImageLoadingListener, View.OnClickListener, CompoundButton.OnCheckedChangeListener {
         boolean contentExpanded;
+        boolean headerExpanded;
         TextView title;
         TextView feed;
         TextView content;
@@ -88,11 +89,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             expandedContent.setText(rssItem.getDescription());
 
             if (rssItem.getImageUrl() != null) {
-                headerWrapper.setVisibility(View.VISIBLE);
-                headerImage.setVisibility(View.INVISIBLE);
                 ImageLoader.getInstance().loadImage(rssItem.getImageUrl(), this);
             } else {
-                headerWrapper.setVisibility(View.GONE);
+                animateHeader(false);
             }
         }
 
@@ -117,13 +116,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         @Override
         public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
             Log.e(TAG, "onLoadingFailed: " + failReason.toString() + " for URL: " + imageUri);
+            animateHeader(false);
         }
 
         @Override
         public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
             if (imageUri.equals(rssItem.getImageUrl())) {
                 headerImage.setImageBitmap(loadedImage);
-                headerImage.setVisibility(View.VISIBLE);
+                animateHeader(true);
             }
         }
 
@@ -131,6 +131,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         public void onLoadingCancelled(String imageUri, View view) {
             // Attempt a retry
             ImageLoader.getInstance().loadImage(imageUri, this);
+            animateHeader(false);
         }
 
         /*
@@ -185,6 +186,49 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                 }
             });
             contentExpanded = expand;
+        }
+
+        private void animateHeader(final boolean expand) {
+            if ((expand && headerExpanded) || (!expand && !headerExpanded)) {
+                return;
+            }
+            int startingHeight = headerImage.getMeasuredHeight();
+            int finalHeight = 0;
+            if (expand) {
+                startingHeight = finalHeight;
+                headerWrapper.setAlpha(0f);
+                headerWrapper.setVisibility(View.VISIBLE);
+                headerWrapper.measure(
+                        View.MeasureSpec.makeMeasureSpec(headerImage.getWidth(), View.MeasureSpec.EXACTLY),
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                finalHeight = headerWrapper.getMeasuredHeight();
+            } else {
+                headerImage.setVisibility(View.VISIBLE);
+            }
+
+            startAnimator(startingHeight, finalHeight, new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    float animatedFraction = valueAnimator.getAnimatedFraction();
+                    float wrapperAlpha = expand ? animatedFraction : 1f - animatedFraction;
+                    float contentAlpha = 1f - wrapperAlpha;
+                    headerWrapper.setAlpha(wrapperAlpha);
+                    headerImage.setAlpha(contentAlpha);
+                    headerWrapper.getLayoutParams().height = animatedFraction == 1f ?
+                            ViewGroup.LayoutParams.WRAP_CONTENT :
+                            (Integer) valueAnimator.getAnimatedValue();
+                    headerWrapper.requestLayout();
+                    if (animatedFraction == 1f) {
+                        if (expand) {
+                            headerImage.setVisibility(View.GONE);
+                        } else {
+                            headerWrapper.setVisibility(View.GONE);
+                        }
+                    }
+                }
+            });
+            headerExpanded = expand;
         }
 
         private void startAnimator(int start, int end, ValueAnimator.AnimatorUpdateListener animatorUpdateListener) {
