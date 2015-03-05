@@ -18,6 +18,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
+import java.lang.ref.WeakReference;
+
 import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.DataSource;
@@ -28,7 +30,17 @@ import io.bloc.android.blocly.api.model.RssItem;
  * Created by theinnformaster on 3/3/15.
  */
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterViewHolder> {
+    public static interface Delegate {
+        public void onItemExpand(ItemAdapter itemAdapter, RssItem rssItem);
+        public void onItemContract(ItemAdapter itemAdapter, RssItem rssItem);
+        public void onItemSiteVisit(ItemAdapter itemAdapter, RssItem rssItem);
+        public void onItemFavorite(ItemAdapter itemAdapter, RssItem rssItem);
+        public void onItemArchive(ItemAdapter itemAdapter, RssItem rssItem);
+    }
+
     private static String TAG = ItemAdapter.class.getSimpleName();
+
+    private WeakReference<Delegate> delegate;
 
     @Override
     public ItemAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int index) {
@@ -45,6 +57,17 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
     @Override
     public int getItemCount() {
         return BloclyApplication.getSharedDataSource().getItems().size();
+    }
+
+    public Delegate getDelegate() {
+        if (delegate == null) {
+            return null;
+        }
+        return delegate.get();
+    }
+
+    public void setDelegate(Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
     }
 
     class ItemAdapterViewHolder extends RecyclerView.ViewHolder implements ImageLoadingListener, View.OnClickListener, CompoundButton.OnCheckedChangeListener {
@@ -111,6 +134,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                 animateContent(!contentExpanded);
             } else {
                 Toast.makeText(view.getContext(), "Visit " + rssItem.getUrl(), Toast.LENGTH_SHORT).show();
+                if (getDelegate() != null) {
+                    getDelegate().onItemSiteVisit(ItemAdapter.this, rssItem);
+                }
             }
         }
 
@@ -139,6 +165,13 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             Log.v(TAG, "Checked changed to: " + isChecked);
+            if (getDelegate() != null) {
+                if (buttonView == archiveCheckbox) {
+                    getDelegate().onItemArchive(ItemAdapter.this, rssItem);
+                } else if (buttonView == favoriteCheckbox) {
+                    getDelegate().onItemFavorite(ItemAdapter.this, rssItem);
+                }
+            }
         }
 
         /*
@@ -159,8 +192,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                         ViewGroup.LayoutParams.WRAP_CONTENT
                 );
                 finalHeight = expandedContentWrapper.getMeasuredHeight();
+                if (getDelegate() != null) {
+                    getDelegate().onItemExpand(ItemAdapter.this, rssItem);
+                }
             } else {
                 content.setVisibility(View.VISIBLE);
+                if (getDelegate() != null) {
+                    getDelegate().onItemContract(ItemAdapter.this, rssItem);
+                }
             }
 
             startAnimator(startingHeight, finalHeight, new ValueAnimator.AnimatorUpdateListener() {

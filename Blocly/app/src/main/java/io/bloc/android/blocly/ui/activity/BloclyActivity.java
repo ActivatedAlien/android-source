@@ -14,13 +14,15 @@ import android.widget.Toast;
 
 import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.model.RssFeed;
+import io.bloc.android.blocly.api.model.RssItem;
 import io.bloc.android.blocly.ui.adapter.ItemAdapter;
 import io.bloc.android.blocly.ui.adapter.NavigationDrawerAdapter;
 
 /**
  * Created by theinnformaster on 3/2/15.
  */
-public class BloclyActivity extends ActionBarActivity implements NavigationDrawerAdapter.NavigationDrawerAdapterDelegate {
+public class BloclyActivity extends ActionBarActivity implements NavigationDrawerAdapter.NavigationDrawerAdapterDelegate, ItemAdapter.Delegate
+{
     private ItemAdapter itemAdapter;
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
@@ -35,6 +37,7 @@ public class BloclyActivity extends ActionBarActivity implements NavigationDrawe
         setSupportActionBar(toolbar);
 
         itemAdapter = new ItemAdapter();
+        itemAdapter.setDelegate(this);
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -88,5 +91,30 @@ public class BloclyActivity extends ActionBarActivity implements NavigationDrawe
     public void didSelectFeed(NavigationDrawerAdapter adapter, RssFeed rssFeed) {
         drawerLayout.closeDrawers();
         Toast.makeText(this, "Show RSS items from " + rssFeed.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemExpand(ItemAdapter itemAdapter, RssItem rssItem) {
+        Toast.makeText(this, "Expanded: " + rssItem.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemContract(ItemAdapter itemAdapter, RssItem rssItem) {
+        Toast.makeText(this, "Contracted: " + rssItem.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemSiteVisit(ItemAdapter itemAdapter, RssItem rssItem) {
+        Toast.makeText(this, "Site Visited: " + rssItem.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemFavorite(ItemAdapter itemAdapter, RssItem rssItem) {
+        Toast.makeText(this, "Site Favorite-d: " + rssItem.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemArchive(ItemAdapter itemAdapter, RssItem rssItem) {
+        Toast.makeText(this, "Site Archived: " + rssItem.getTitle(), Toast.LENGTH_SHORT).show();
     }
 }
