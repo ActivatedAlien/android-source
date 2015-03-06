@@ -1,5 +1,6 @@
 package io.bloc.android.blocly.ui.activity;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
@@ -16,6 +17,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -168,8 +170,20 @@ public class BloclyActivity extends ActionBarActivity
         if (drawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
-        Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
-        return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.action_share) {
+            RssItem itemToShare = expandedItem;
+            if (itemToShare == null) {
+                return false;
+            }
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_TEXT,
+                    String.format("%s (%s)", itemToShare.getTitle(), itemToShare.getUrl()));
+            shareIntent.setType("text/plain");
+            Intent chooser = Intent.createChooser(shareIntent, getString(R.string.share_chooser_title));
+            startActivity(chooser);
+        } else {
+            Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
+        }        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -230,8 +244,32 @@ public class BloclyActivity extends ActionBarActivity
         animateShareItem(expandedItem != null);
     }
 
+    @Override
     public void onItemVisitClicked(RssItemListFragment rssItemListFragment, RssItem rssItem) {
         Intent visitIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(rssItem.getUrl()));
         startActivity(visitIntent);
+    }
+
+    /*
+      * Private methods
+      */
+
+    private void animateShareItem(final boolean enabled) {
+        MenuItem shareItem = menu.findItem(R.id.action_share);
+        if (shareItem.isEnabled() == enabled) {
+            return;
+        }
+        shareItem.setEnabled(enabled);
+        final Drawable shareIcon = shareItem.getIcon();
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(enabled ? new int[]{0, 255} : new int[]{255, 0});
+        valueAnimator.setDuration(getResources().getInteger(android.R.integer.config_shortAnimTime));
+        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                shareIcon.setAlpha((Integer) animation.getAnimatedValue());
+            }
+        });
+        valueAnimator.start();
     }
 }
