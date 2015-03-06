@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.api.model.database.table;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
@@ -35,6 +36,26 @@ public class RssFeedTable extends Table {
             return writableDB.insert(NAME, null, values);
         }
     }
+
+    public static String getSiteURL(Cursor cursor) {
+        return getString(cursor, COLUMN_LINK);
+    }
+
+    // #3b
+    public static String getFeedURL(Cursor cursor) {
+        return getString(cursor, COLUMN_FEED_URL);
+    }
+
+    // #3c
+    public static String getTitle(Cursor cursor) {
+        return getString(cursor, COLUMN_TITLE);
+    }
+
+    // #3d
+    public static String getDescription(Cursor cursor) {
+        return getString(cursor, COLUMN_DESCRIPTION);
+    }
+
 
     private static final String NAME = "rss_feeds";
     private static final String COLUMN_LINK = "link";
