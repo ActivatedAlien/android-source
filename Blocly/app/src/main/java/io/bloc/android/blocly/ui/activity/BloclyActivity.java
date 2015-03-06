@@ -2,6 +2,8 @@ package io.bloc.android.blocly.ui.activity;
 
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -13,6 +15,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +24,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.R;
@@ -50,6 +54,18 @@ public class BloclyActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
+
+        /* assignment */
+        // you can make this more readable by printing the load label of each ResolveInfo, I'm just lazy
+        List<ResolveInfo> openWebPage =
+                getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW), PackageManager.MATCH_DEFAULT_ONLY);
+        List<ResolveInfo> dialPhoneNumber =
+                getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_CALL), PackageManager.MATCH_DEFAULT_ONLY);
+        List<ResolveInfo> composeEmail =
+                getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_SENDTO), PackageManager.MATCH_DEFAULT_ONLY);
+        Log.v("OPEN WEB PAGE", openWebPage.toString());
+        Log.v("DIAL PHONE NUMBER", dialPhoneNumber.toString());
+        Log.v("COMPOSE EMAIL", composeEmail.toString());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.tb_activity_blocly);
         setSupportActionBar(toolbar);
