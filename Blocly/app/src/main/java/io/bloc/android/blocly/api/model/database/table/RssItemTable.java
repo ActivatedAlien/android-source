@@ -126,4 +126,39 @@ public class RssItemTable extends Table {
                 + COLUMN_FAVORITE + " INTEGER DEFAULT 0,"
                 + COLUMN_ARCHIVED + " INTEGER DEFAULT 0)";
     }
+
+    public String getAllArchived() {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_ARCHIVED + " == 1";
+    }
+
+    public String getAllArchivedFromFeed(String feed) {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_ARCHIVED + " == 1"
+                + " AND " + COLUMN_RSS_FEED + " == " + feed;
+    }
+
+    public String getAllFavorites() {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_FAVORITE + " == 1";
+    }
+
+    public String getAllFavoritesFromFeed(String feed) {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_FAVORITE + " == 1"
+                + " AND " + COLUMN_RSS_FEED + " == " + feed;
+    }
+
+    public String getAllFromFeed(String feed) {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_RSS_FEED + " == " + feed;
+    }
+
+    public String getAllFromFeed(String feed, int offset, int limit) {
+        return "SELECT * FROM " + getName()
+                + " WHERE " + COLUMN_RSS_FEED + " == " + feed
+                + " LIMIT " + limit
+                + " OFFSET " + offset;
+    }
+
 }
