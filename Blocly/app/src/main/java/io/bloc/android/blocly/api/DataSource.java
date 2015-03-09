@@ -1,7 +1,11 @@
 package io.bloc.android.blocly.api;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.R;
@@ -19,12 +23,39 @@ public class DataSource {
     public DataSource() {
         feeds = new ArrayList<RssFeed>();
         items = new ArrayList<RssItem>();
-        createFakeData();
+        //createFakeData();
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                new GetFeedsNetworkRequest("http://feeds.feedburner.com/androidcentral?format=xml").performRequest();
+                List<GetFeedsNetworkRequest.FeedResponse> responses =
+                        new GetFeedsNetworkRequest("http://feeds.feedburner.com/androidcentral?format=xml").performRequest();
+                for (GetFeedsNetworkRequest.FeedResponse feedResponse : responses) {
+                    feeds.add(new RssFeed(feedResponse.channelTitle,
+                            feedResponse.channelDescription,
+                            feedResponse.channelURL,
+                            feedResponse.channelFeedURL));
+                    for (GetFeedsNetworkRequest.ItemResponse itemResponse : feedResponse.channelItems) {
+                        DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss z", Locale.ENGLISH);
+                        long itemPubDate = System.currentTimeMillis();;
+                        try {
+                            itemPubDate = dateFormat.parse(itemResponse.itemPubDate).getTime();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+
+                        items.add(new RssItem(itemResponse.itemGUID,
+                                itemResponse.itemTitle,
+                                itemResponse.itemDescription,
+                                itemResponse.itemURL,
+                                itemResponse.itemEnclosureURL,
+                                0,
+                                itemPubDate,
+                                false,
+                                false
+                                ));
+                    }
+                }
             }
         }).start();
     }
