@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.ui.activity;
 
 import android.animation.ValueAnimator;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
@@ -209,6 +210,18 @@ public class BloclyActivity extends ActionBarActivity
 
     @Override
     public void didSelectFeed(NavigationDrawerAdapter adapter, RssFeed rssFeed) {
+        Fragment clickedFragment = getFragmentManager().findFragmentByTag(rssFeed.getRowId() + "");
+        if (clickedFragment == null) {
+            getFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(rssFeed), rssFeed.getRowId() + "")
+                    .commit();
+        } else {
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fl_activity_blocly, clickedFragment)
+                    .commit();
+        }
         drawerLayout.closeDrawers();
         Toast.makeText(this, "Show RSS items from " + rssFeed.getTitle(), Toast.LENGTH_SHORT).show();
     }
