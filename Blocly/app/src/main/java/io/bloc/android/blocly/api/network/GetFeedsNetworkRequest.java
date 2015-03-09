@@ -101,6 +101,9 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                             NamedNodeMap mediaAttributes = tagNode.getAttributes();
                             itemMediaURL = mediaAttributes.getNamedItem(XML_ATTRIBUTE_URL).getTextContent();
                             itemMediaMIMEType = mediaAttributes.getNamedItem(XML_ATTRIBUTE_TYPE).getTextContent();
+                            if (itemMediaMIMEType.contains("video")) {
+                                itemImageURL = itemMediaURL + "/default.jpg";
+                            }
                         }
                     }
 
