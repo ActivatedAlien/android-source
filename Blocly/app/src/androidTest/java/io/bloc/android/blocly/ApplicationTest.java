@@ -16,6 +16,7 @@ public class ApplicationTest extends ApplicationTestCase<BloclyApplication> {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         setContext(new RenamingDelegatingContext(getContext(), "test_"));
         createApplication();
     }
