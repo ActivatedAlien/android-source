@@ -11,6 +11,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,8 +54,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         TextView title;
         TextView feed;
         TextView content;
-        View headerWrapper;
         ImageView headerImage;
+        View headerWrapper;
+        ProgressBar progressBar;
         CheckBox archiveCheckbox;
         CheckBox favoriteCheckbox;
         View expandedContentWrapper;
@@ -67,8 +69,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             title = (TextView) itemView.findViewById(R.id.tv_rss_item_title);
             feed = (TextView) itemView.findViewById(R.id.tv_rss_item_feed_title);
             content = (TextView) itemView.findViewById(R.id.tv_rss_item_content);
+            headerImage = (ImageView) itemView.findViewById(R.id.iv_rss_item_image);
             headerWrapper = itemView.findViewById(R.id.fl_rss_item_image_header);
-            headerImage = (ImageView) headerWrapper.findViewById(R.id.iv_rss_item_image);
+            progressBar = (ProgressBar) itemView.findViewById(R.id.pb_rss_item);
             archiveCheckbox = (CheckBox) itemView.findViewById(R.id.cb_rss_item_check_mark);
             favoriteCheckbox = (CheckBox) itemView.findViewById(R.id.cb_rss_item_favorite_star);
             expandedContentWrapper = itemView.findViewById(R.id.ll_rss_item_expanded_content_wrapper);
@@ -116,6 +119,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         @Override
         public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
             Log.e(TAG, "onLoadingFailed: " + failReason.toString() + " for URL: " + imageUri);
+            Log.v(TAG, "onLoadingFailed calling animateHeader");
             animateHeader(false);
         }
 
@@ -123,6 +127,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
             if (imageUri.equals(rssItem.getImageUrl())) {
                 headerImage.setImageBitmap(loadedImage);
+                Log.v(TAG, "onLoadingComplete calling animateHeader");
                 animateHeader(true);
             }
         }
@@ -131,6 +136,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         public void onLoadingCancelled(String imageUri, View view) {
             // Attempt a retry
             ImageLoader.getInstance().loadImage(imageUri, this);
+            Log.v(TAG, "onLoadingCancelled calling animateHeader");
+
             animateHeader(false);
         }
 
@@ -192,12 +199,13 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             if ((expand && headerExpanded) || (!expand && !headerExpanded)) {
                 return;
             }
-            int startingHeight = headerImage.getMeasuredHeight();
-            int finalHeight = 0;
+            int startingHeight = headerWrapper.getMeasuredHeight();
+            int finalHeight = progressBar.getMeasuredHeight();
             if (expand) {
                 startingHeight = finalHeight;
-                headerWrapper.setAlpha(0f);
-                headerWrapper.setVisibility(View.VISIBLE);
+                headerImage.setVisibility(View.VISIBLE);
+                headerImage.setAlpha(0f);
+                progressBar.setVisibility(View.GONE);
                 headerWrapper.measure(
                         View.MeasureSpec.makeMeasureSpec(headerImage.getWidth(), View.MeasureSpec.EXACTLY),
                         ViewGroup.LayoutParams.WRAP_CONTENT
@@ -205,25 +213,26 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                 finalHeight = headerWrapper.getMeasuredHeight();
             } else {
                 headerImage.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setAlpha(0f);
             }
 
             startAnimator(startingHeight, finalHeight, new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
                     float animatedFraction = valueAnimator.getAnimatedFraction();
-                    float wrapperAlpha = expand ? animatedFraction : 1f - animatedFraction;
-                    float contentAlpha = 1f - wrapperAlpha;
-                    headerWrapper.setAlpha(wrapperAlpha);
+                    float contentAlpha = expand ? animatedFraction : 1f - animatedFraction;
                     headerImage.setAlpha(contentAlpha);
+
                     headerWrapper.getLayoutParams().height = animatedFraction == 1f ?
                             ViewGroup.LayoutParams.WRAP_CONTENT :
                             (Integer) valueAnimator.getAnimatedValue();
                     headerWrapper.requestLayout();
+
                     if (animatedFraction == 1f) {
-                        if (expand) {
+                        if (!expand) {
                             headerImage.setVisibility(View.GONE);
-                        } else {
-                            headerWrapper.setVisibility(View.GONE);
+                            progressBar.setAlpha(1f);
                         }
                     }
                 }
