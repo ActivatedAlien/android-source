@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/action_archive"
+        android:icon="@drawable/btn_check_checkbox"
+        android:title="@string/toolbar_archive"
+        android:orderInCategory="0"
+        app:showAsAction="always"/>
+
+    <item android:id="@+id/action_favorite"
+        android:icon="@drawable/btn_star_checkbox"
+        android:title="@string/toolbar_favorite"
+        android:orderInCategory="1"
+        app:showAsAction="always"/>
+
+    <item android:id="@+id/action_visit_page"
+        android:title="@string/toolbar_visit_page"
+        android:orderInCategory="2"
+        app:showAsAction="always"/>
+
+    <item android:id="@+id/action_share"
+        android:icon="@drawable/ic_share_selector"
+        android:title="@string/toolbar_share"
+        android:orderInCategory="3"
+        app:showAsAction="always"/>
 
 </menu>

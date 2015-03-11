@@ -49,6 +49,7 @@ public class BloclyActivity extends ActionBarActivity
     private List<RssFeed> allFeeds = new ArrayList<RssFeed>();
     private RssItem expandedItem = null;
     private boolean onTablet;
+    private boolean onTabletPortrait;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,7 @@ public class BloclyActivity extends ActionBarActivity
         setContentView(R.layout.activity_blocly);
 
         onTablet = findViewById(R.id.fl_activity_blocly_right_pane) != null;
+        onTabletPortrait = findViewById(R.id.fl_activity_blocly_bottom_pane) != null;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.tb_activity_blocly);
         setSupportActionBar(toolbar);
@@ -82,6 +84,11 @@ public class BloclyActivity extends ActionBarActivity
                         Drawable icon = item.getIcon();
                     if (icon != null) {
                         icon.setAlpha(255);
+                        if (item.getItemId() == R.id.action_share && onTablet) {
+                            item.setEnabled(false);
+                            item.setVisible(false);
+                            icon.setAlpha(0);
+                        }
                     }
                 }
             }
@@ -113,6 +120,11 @@ public class BloclyActivity extends ActionBarActivity
                         Drawable icon = item.getIcon();
                     if (icon != null) {
                         icon.setAlpha((int) ((1f - slideOffset) * 255));
+                        if (item.getItemId() == R.id.action_share && onTablet) {
+                            item.setEnabled(false);
+                            item.setVisible(false);
+                            icon.setAlpha(0);
+                        }
                     }
                 }
             }
@@ -187,7 +199,8 @@ public class BloclyActivity extends ActionBarActivity
             startActivity(chooser);
         } else {
             Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
-        }        return super.onOptionsItemSelected(item);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -235,9 +248,14 @@ public class BloclyActivity extends ActionBarActivity
         expandedItem = rssItem;
         if (onTablet) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.fl_activity_blocly_right_pane, RssItemDetailFragment.detailFragmentForRssItem(rssItem))
+                    .replace(R.id.fl_activity_blocly_right_pane, RssItemDetailFragment.detailFragmentForRssItem(rssItemListFragment, rssItem))
                     .commit();
 
+            return;
+        } else if (onTabletPortrait) {
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.fl_activity_blocly_bottom_pane, RssItemDetailFragment.detailFragmentForRssItem(rssItemListFragment, rssItem))
+                    .commit();
             return;
         }
         animateShareItem(expandedItem != null);
