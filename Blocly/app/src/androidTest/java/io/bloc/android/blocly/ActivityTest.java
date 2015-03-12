@@ -1,8 +1,7 @@
 package io.bloc.android.blocly;
 
+import android.support.v7.widget.RecyclerView;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.ViewAsserts;
-import android.view.View;
 import android.widget.CheckBox;
 
 import io.bloc.android.blocly.ui.activity.BloclyActivity;
@@ -12,10 +11,11 @@ import io.bloc.android.blocly.ui.activity.BloclyActivity;
  */
 public class ActivityTest extends ActivityInstrumentationTestCase2<BloclyActivity> {
     BloclyActivity bloclyActivity;
+    RecyclerView recylerView;
     CheckBox favoriteCheckBox;
 
-    public ActivityTest(Class<BloclyActivity> activityClass) {
-        super(activityClass);
+    public ActivityTest() {
+        super(BloclyActivity.class);
     }
 
     @Override
@@ -24,14 +24,15 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<BloclyActivit
 
         setActivityInitialTouchMode(true);
         bloclyActivity = getActivity();
-        favoriteCheckBox = (CheckBox) bloclyActivity.findViewById(R.id.cb_rss_item_check_mark);
+        favoriteCheckBox = (CheckBox) bloclyActivity.findViewById(R.id.cb_rss_item_favorite_star);
+        recylerView = (RecyclerView) bloclyActivity.findViewById(R.id.rv_fragment_rss_list);
     }
 
     public void testFavoriteCheckboxPresent() {
-        final View decorView = bloclyActivity.getWindow().getDecorView();
-
-        // how do I select one items and then select that item's checkbox?
-        ViewAsserts.assertOnScreen(decorView, favoriteCheckBox);
+        int N = recylerView.getChildCount();
+        for (int i = 0; i < N; i++) {
+            assertNotNull(recylerView.getChildAt(i).findViewById(R.id.cb_rss_item_favorite_star));
+        }
     }
 
     public void testFavoriteCheckboxWorking() {
