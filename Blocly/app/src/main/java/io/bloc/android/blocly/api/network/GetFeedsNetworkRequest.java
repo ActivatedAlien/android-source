@@ -10,7 +10,6 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,21 +79,21 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                         String tag = tagNode.getNodeName();
                         if (XML_TAG_LINK.equalsIgnoreCase(tag)) {
                             itemURL = tagNode.getTextContent();
-                            URL url = new URL(itemURL);
-                            if (url.getHost().toLowerCase().contains("youtube")) {
-                                try {
-                                    String id = itemURL.split("v=")[1];
-                                    itemImageURL = "http://img.youtube.com/vi/" + id + "/default.jpg";
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
                         } else if (XML_TAG_TITLE.equalsIgnoreCase(tag)) {
                             itemTitle = tagNode.getTextContent();
                         } else if (XML_TAG_DESCRIPTION.equalsIgnoreCase(tag)) {
                             String descriptionText = tagNode.getTextContent();
                             itemImageURL = parseImageFromHTML(descriptionText);
                             itemDescription = parseTextFromHTML(descriptionText);
+                            if (itemDescription.toLowerCase().contains("youtube")) {
+                                try {
+                                    String[] elements = itemDescription.toLowerCase().split("\\?rel=")[0].split("/");
+                                    String id = elements[elements.length - 1];
+                                    itemImageURL = "http://img.youtube.com/vi/" + id + "/default.jpg";
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         } else if (XML_TAG_ENCLOSURE.equalsIgnoreCase(tag)) {
                             NamedNodeMap enclosureAttributes = tagNode.getAttributes();
                             itemEnclosureURL = enclosureAttributes.getNamedItem(XML_ATTRIBUTE_URL).getTextContent();
