@@ -2,9 +2,12 @@ package io.bloc.android.blocly;
 
 import android.support.v7.widget.RecyclerView;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.TouchUtils;
 import android.widget.CheckBox;
 
+import io.bloc.android.blocly.api.model.RssItem;
 import io.bloc.android.blocly.ui.activity.BloclyActivity;
+import io.bloc.android.blocly.ui.adapter.ItemAdapter;
 
 /**
  * Created by theinnformaster on 3/11/15.
@@ -12,7 +15,6 @@ import io.bloc.android.blocly.ui.activity.BloclyActivity;
 public class ActivityTest extends ActivityInstrumentationTestCase2<BloclyActivity> {
     BloclyActivity bloclyActivity;
     RecyclerView recylerView;
-    CheckBox favoriteCheckBox;
 
     public ActivityTest() {
         super(BloclyActivity.class);
@@ -24,7 +26,6 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<BloclyActivit
 
         setActivityInitialTouchMode(true);
         bloclyActivity = getActivity();
-        favoriteCheckBox = (CheckBox) bloclyActivity.findViewById(R.id.cb_rss_item_favorite_star);
         recylerView = (RecyclerView) bloclyActivity.findViewById(R.id.rv_fragment_rss_list);
     }
 
@@ -36,5 +37,22 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<BloclyActivit
     }
 
     public void testFavoriteCheckboxWorking() {
+        int N = recylerView.getChildCount();
+        ItemAdapter itemAdapter = (ItemAdapter) recylerView.getAdapter();
+        assertNotNull(itemAdapter);
+
+        for (int i = 0; i < N; i++) {
+            CheckBox cb = (CheckBox) recylerView.getChildAt(i).findViewById(R.id.cb_rss_item_favorite_star);
+            RssItem rssItem = itemAdapter.getDataSource().getRssItem(itemAdapter, i);
+            assertNotNull(rssItem);
+
+            assertFalse(rssItem.isFavorite());
+
+            TouchUtils.clickView(this, cb);
+            assertTrue(rssItem.isFavorite());
+
+            TouchUtils.clickView(this, cb);
+            assertFalse(rssItem.isFavorite());
+        }
     }
 }
