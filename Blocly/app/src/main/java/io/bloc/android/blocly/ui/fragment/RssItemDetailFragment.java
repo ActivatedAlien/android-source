@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -178,7 +177,6 @@ public class RssItemDetailFragment extends Fragment implements ImageLoadingListe
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_share) {
-            Log.v("HERE", "I'm here baby");
 /*            RssItem itemToShare = expandedItem;
             if (itemToShare == null) {
                 return false;
