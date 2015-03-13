@@ -10,6 +10,7 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,6 +80,15 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                         String tag = tagNode.getNodeName();
                         if (XML_TAG_LINK.equalsIgnoreCase(tag)) {
                             itemURL = tagNode.getTextContent();
+                            URL url = new URL(itemURL);
+                            if (url.getHost().toLowerCase().contains("youtube")) {
+                                try {
+                                    String id = itemURL.split("v=")[1];
+                                    itemImageURL = "http://img.youtube.com/vi/" + id + "/default.jpg";
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         } else if (XML_TAG_TITLE.equalsIgnoreCase(tag)) {
                             itemTitle = tagNode.getTextContent();
                         } else if (XML_TAG_DESCRIPTION.equalsIgnoreCase(tag)) {
@@ -101,9 +111,6 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                             NamedNodeMap mediaAttributes = tagNode.getAttributes();
                             itemMediaURL = mediaAttributes.getNamedItem(XML_ATTRIBUTE_URL).getTextContent();
                             itemMediaMIMEType = mediaAttributes.getNamedItem(XML_ATTRIBUTE_TYPE).getTextContent();
-                            if (itemMediaMIMEType.contains("video")) {
-                                itemImageURL = itemMediaURL + "/default.jpg";
-                            }
                         }
                     }
 
