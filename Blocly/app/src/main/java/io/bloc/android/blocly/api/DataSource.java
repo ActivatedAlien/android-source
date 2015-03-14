@@ -297,6 +297,18 @@ public class DataSource {
         return getFeedsNetworkRequest.getErrorCode() != 0;
     }
 
+    public void updateRSSItem(RssItem rssItem) {
+        new RssItemTable.Builder()
+                .setTitle(rssItem.getTitle())
+                .setDescription(rssItem.getDescription())
+                .setGUID(rssItem.getGuid())
+                .setLink(rssItem.getUrl())
+                .setRSSFeed(rssItem.getRssFeedId())
+                .setFavorite(rssItem.isFavorite() ? 0 : 1)
+                .updateForId(databaseOpenHelper.getWritableDatabase(), rssItem.getGuid());
+    }
+
+
     long insertResponseToDatabase(long feedId, GetFeedsNetworkRequest.ItemResponse itemResponse) {
         long itemPubDate = System.currentTimeMillis();
         DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss z", Locale.ENGLISH);

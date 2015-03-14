@@ -52,6 +52,15 @@ public class RssItemTable extends Table {
             return this;
         }
 
+        public Builder setFavorite(int favorite) {
+            values.put(COLUMN_FAVORITE, favorite);
+            return this;
+        }
+
+        public long updateForId(SQLiteDatabase writableDB, String guId) {
+            return writableDB.update(RssItemTable.NAME, values, COLUMN_GUID + " = " + guId, null);
+        }
+
         @Override
         public long insert(SQLiteDatabase writableDB) {
             return writableDB.insert(RssItemTable.NAME, null, values);

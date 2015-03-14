@@ -269,6 +269,11 @@ public class BloclyActivity extends ActionBarActivity
         startActivity(visitIntent);
     }
 
+    @Override
+    public void onItemFavoriteClicked(RssItemListFragment rssItemListFragment, RssItem rssItem) {
+        BloclyApplication.getSharedDataSource().updateRSSItem(rssItem);
+    }
+
     /*
       * Private methods
       */
