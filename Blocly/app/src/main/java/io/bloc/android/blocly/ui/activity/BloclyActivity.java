@@ -65,40 +65,61 @@ public class BloclyActivity extends ActionBarActivity
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                BloclyApplication.getSharedDataSource().fetchNewFeed("http://feeds.feedburner.com/androidcentral?format=xml",
-                        new DataSource.Callback<RssFeed>() {
-                            @Override
-                            public void onSuccess(RssFeed rssFeed) {
-                                if (isFinishing() || isDestroyed()) {
-                                    return;
-                                }
-                                allFeeds.add(rssFeed);
-                                navigationDrawerAdapter.notifyDataSetChanged();
-                                BloclyApplication.getSharedDataSource().fetchItemsForFeed(rssFeed,
-                                        new DataSource.Callback<List<RssItem>>() {
-                                            @Override
-                                            public void onSuccess(List<RssItem> rssItems) {
-                                                if (isFinishing() || isDestroyed()) {
-                                                    return;
+                if (allFeeds.size() == 0) {
+                    BloclyApplication.getSharedDataSource().fetchNewFeed("http://feeds.feedburner.com/androidcentral?format=xml",
+                            new DataSource.Callback<RssFeed>() {
+                                @Override
+                                public void onSuccess(RssFeed rssFeed) {
+                                    if (isFinishing() || isDestroyed()) {
+                                        return;
+                                    }
+                                    allFeeds.add(rssFeed);
+                                    navigationDrawerAdapter.notifyDataSetChanged();
+                                    BloclyApplication.getSharedDataSource().fetchItemsForFeed(rssFeed,
+                                            new DataSource.Callback<List<RssItem>>() {
+                                                @Override
+                                                public void onSuccess(List<RssItem> rssItems) {
+                                                    if (isFinishing() || isDestroyed()) {
+                                                        return;
+                                                    }
+                                                    currentItems.addAll(rssItems);
+                                                    itemAdapter.notifyItemRangeInserted(0, currentItems.size());
+                                                    swipeRefreshLayout.setRefreshing(false);
                                                 }
-                                                currentItems.addAll(rssItems);
-                                                itemAdapter.notifyItemRangeInserted(0, currentItems.size());
-                                                swipeRefreshLayout.setRefreshing(false);
-                                            }
 
-                                            @Override
-                                            public void onError(String errorMessage) {
-                                                swipeRefreshLayout.setRefreshing(false);
-                                            }
-                                        });
-                            }
+                                                @Override
+                                                public void onError(String errorMessage) {
+                                                    swipeRefreshLayout.setRefreshing(false);
+                                                }
+                                            });
+                                }
 
-                            @Override
-                            public void onError(String errorMessage) {
-                                Toast.makeText(BloclyActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                                swipeRefreshLayout.setRefreshing(false);
-                            }
-                        });
+                                @Override
+                                public void onError(String errorMessage) {
+                                    Toast.makeText(BloclyActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
+                            });
+                } else {
+                    BloclyApplication.getSharedDataSource().fetchNewItemsForFeed(allFeeds.get(0),
+                            new DataSource.Callback<List<RssItem>>() {
+                                @Override
+                                public void onSuccess(List<RssItem> rssItems) {
+                                    if (isFinishing() || isDestroyed()) {
+                                        return;
+                                    }
+                                    int prevSize = currentItems.size();
+                                    currentItems.addAll(rssItems);
+                                    itemAdapter.notifyItemRangeInserted(prevSize, rssItems.size());
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
+
+                                @Override
+                                public void onError(String errorMessage) {
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
+                            });
+                }
             }
         });
 
