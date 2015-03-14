@@ -57,8 +57,8 @@ public class RssItemTable extends Table {
             return this;
         }
 
-        public long updateForId(SQLiteDatabase writableDB, String guId) {
-            return writableDB.update(RssItemTable.NAME, values, COLUMN_GUID + " = " + guId, null);
+        public void updateForId(SQLiteDatabase writableDB, String guId) {
+            writableDB.update(RssItemTable.NAME, values, COLUMN_GUID  + " = ?", new String[] { guId});
         }
 
         @Override

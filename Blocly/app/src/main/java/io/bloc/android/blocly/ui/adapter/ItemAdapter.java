@@ -261,12 +261,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (buttonView == favoriteCheckbox) {
-                rssItem.setFavorite(!rssItem.isFavorite());
+                rssItem.setFavorite(isChecked);
                 if (delegate != null) {
                     getDelegate().onFavoriteClicked(ItemAdapter.this, rssItem);
                 }
             }
-            Log.v(TAG, "Checked changed to: " + isChecked);
         }
 
         /*
