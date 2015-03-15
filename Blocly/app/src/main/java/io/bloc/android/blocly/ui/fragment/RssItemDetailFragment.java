@@ -43,6 +43,14 @@ public class RssItemDetailFragment extends Fragment implements ImageLoadingListe
         return rssItemDetailFragment;
     }
 
+    public static RssItemDetailFragment detailFragmentForRssItem(RssItem rssItem) {
+        Bundle arguments = new Bundle();
+        arguments.putLong(BUNDLE_EXTRA_RSS_ITEM, rssItem.getRowId());
+        RssItemDetailFragment rssItemDetailFragment = new RssItemDetailFragment();
+        rssItemDetailFragment.setArguments(arguments);
+        return rssItemDetailFragment;
+    }
+
     Menu menu;
     Toolbar toolbar;
     ItemAdapter itemAdapter;
@@ -58,28 +66,57 @@ public class RssItemDetailFragment extends Fragment implements ImageLoadingListe
         super.onCreate(savedInstanceState);
 
         Bundle arguments = getArguments();
-        if (arguments != null) {
-            long rssItemId = arguments.getLong(BUNDLE_EXTRA_RSS_ITEM);
-            BloclyApplication.getSharedDataSource().fetchRSSItemWithId(rssItemId, new DataSource.Callback<RssItem>() {
-                @Override
-                public void onSuccess(RssItem rssItem) {
-                    if (getActivity() == null) {
-                        return;
+            if (arguments != null || savedInstanceState != null) {
+                long rssItemId;
+                if (savedInstanceState != null) {
+                    rssItemId = ((RssItem) savedInstanceState.getParcelable(BUNDLE_EXTRA_RSS_ITEM)).getRowId();
+                } else {
+                    rssItemId = arguments.getLong(BUNDLE_EXTRA_RSS_ITEM);
+                }
+                BloclyApplication.getSharedDataSource().fetchRSSItemWithId(rssItemId, new DataSource.Callback<RssItem>() {
+                    @Override
+                    public void onSuccess(RssItem rssItem) {
+                        if (getActivity() == null) {
+                            return;
+                        }
+                        item = rssItem;
+                        title.setText(rssItem.getTitle());
+                        content.setText(rssItem.getDescription());
+                        ImageLoader.getInstance().loadImage(rssItem.getImageUrl(), RssItemDetailFragment.this);
                     }
-                    item = rssItem;
-                    title.setText(rssItem.getTitle());
-                    content.setText(rssItem.getDescription());
-                    ImageLoader.getInstance().loadImage(rssItem.getImageUrl(), RssItemDetailFragment.this);
-                }
 
-                @Override
-                public void onError(String errorMessage) {
-                }
-            });
-        }
+                    @Override
+                    public void onError(String errorMessage) {
+                    }
+                });
+            }
+
 
         onLoadingComplete = false;
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelable(BUNDLE_EXTRA_RSS_ITEM, item);
+    }
+/*
+    @Override
+    public void onActivityCreated(final Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Log.v("INSTANCE IS NULL", "" + (savedInstanceState == null));
+        if (savedInstanceState != null) {
+            item = savedInstanceState.getParcelable(BUNDLE_EXTRA_RSS_ITEM);
+        }
+
+        Log.v("ITEM IS NULL", "" + (item == null));
+        if (item != null) {
+            Log.v("ITEM DEETS", item.getTitle() + " " + item.getDescription());
+            title.setText(item.getTitle());
+            content.setText(item.getDescription());
+            ImageLoader.getInstance().loadImage(item.getImageUrl(), RssItemDetailFragment.this);
+        }
+    }*/
 
     @Nullable
     @Override

@@ -13,7 +13,6 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +42,7 @@ public class BloclyActivity extends ActionBarActivity
         RssItemListFragment.Delegate {
 
     private static final String BUNDLE_EXTRA_CURRENT_FEED = BloclyActivity.class.getCanonicalName().concat(".EXTRA_CURRENT_FEED");
+    private static final String BUNDLE_EXTRA_CURRENT_ITEM = BloclyActivity.class.getCanonicalName().concat(".EXTRA_CURRENT_ITEM");
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
@@ -53,6 +53,7 @@ public class BloclyActivity extends ActionBarActivity
     private RssItem expandedItem = null;
     private boolean onTablet;
     private boolean onTabletPortrait;
+
     private RssFeed currentFeed;
 
     @Override
@@ -62,6 +63,7 @@ public class BloclyActivity extends ActionBarActivity
 
         if (savedInstanceState != null) {
             currentFeed = savedInstanceState.getParcelable(BUNDLE_EXTRA_CURRENT_FEED);
+            expandedItem = savedInstanceState.getParcelable(BUNDLE_EXTRA_CURRENT_ITEM);
         }
 
         onTablet = findViewById(R.id.fl_activity_blocly_right_pane) != null;
@@ -165,7 +167,6 @@ public class BloclyActivity extends ActionBarActivity
             @Override
             public void onSuccess(List<RssFeed> rssFeeds) {
                 allFeeds.addAll(rssFeeds);
-                Log.v("ALL FEEDS", allFeeds.size() + "");
                 navigationDrawerAdapter.notifyDataSetChanged();
                 if (currentFeed == null) {
                     currentFeed = rssFeeds.get(0);
@@ -181,12 +182,24 @@ public class BloclyActivity extends ActionBarActivity
             }
         });
 
+        if (expandedItem != null) {
+            if (onTablet) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.fl_activity_blocly_right_pane, RssItemDetailFragment.detailFragmentForRssItem(expandedItem))
+                        .commit();
+            } else if (onTabletPortrait) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.fl_activity_blocly_bottom_pane, RssItemDetailFragment.detailFragmentForRssItem(expandedItem))
+                        .commit();
+            }
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putParcelable(BUNDLE_EXTRA_CURRENT_FEED, currentFeed);
+        savedInstanceState.putParcelable(BUNDLE_EXTRA_CURRENT_ITEM, expandedItem);
     }
 
     @Override
@@ -241,7 +254,6 @@ public class BloclyActivity extends ActionBarActivity
     @Override
     public void didSelectNavigationOption(NavigationDrawerAdapter adapter, NavigationDrawerAdapter.NavigationOption navigationOption) {
         drawerLayout.closeDrawers();
-        Log.v("NAVG", "I clicked here");
         Toast.makeText(this, "Show the " + navigationOption.name(), Toast.LENGTH_SHORT).show();
     }
 
@@ -272,7 +284,6 @@ public class BloclyActivity extends ActionBarActivity
             getFragmentManager().beginTransaction()
                     .replace(R.id.fl_activity_blocly_right_pane, RssItemDetailFragment.detailFragmentForRssItem(rssItemListFragment, rssItem))
                     .commit();
-
             return;
         } else if (onTabletPortrait) {
             getFragmentManager().beginTransaction()
@@ -305,8 +316,9 @@ public class BloclyActivity extends ActionBarActivity
       * Private methods
       */
 
-    private void animateShareItem(final boolean enabled) {
+    private void animateShareItem(final boolean isEnabled) {
         MenuItem shareItem = menu.findItem(R.id.action_share);
+        boolean enabled = (onTablet || onTabletPortrait) ? false : isEnabled;
         if (shareItem.isEnabled() == enabled) {
             return;
         }
