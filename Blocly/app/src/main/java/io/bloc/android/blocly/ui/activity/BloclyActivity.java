@@ -13,6 +13,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,6 +42,8 @@ public class BloclyActivity extends ActionBarActivity
         NavigationDrawerAdapter.NavigationDrawerAdapterDataSource,
         RssItemListFragment.Delegate {
 
+    private static final String BUNDLE_EXTRA_CURRENT_FEED = BloclyActivity.class.getCanonicalName().concat(".EXTRA_CURRENT_FEED");
+
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private NavigationDrawerAdapter navigationDrawerAdapter;
@@ -50,11 +53,16 @@ public class BloclyActivity extends ActionBarActivity
     private RssItem expandedItem = null;
     private boolean onTablet;
     private boolean onTabletPortrait;
+    private RssFeed currentFeed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
+
+        if (savedInstanceState != null) {
+            currentFeed = savedInstanceState.getParcelable(BUNDLE_EXTRA_CURRENT_FEED);
+        }
 
         onTablet = findViewById(R.id.fl_activity_blocly_right_pane) != null;
         onTabletPortrait = findViewById(R.id.fl_activity_blocly_bottom_pane) != null;
@@ -78,10 +86,10 @@ public class BloclyActivity extends ActionBarActivity
                 for (int i = 0; i < menu.size(); i++) {
                     MenuItem item = menu.getItem(i);
                     if (item.getItemId() == R.id.action_share
-                        && expandedItem == null) {
-                            continue;
-                        }
-                        Drawable icon = item.getIcon();
+                            && expandedItem == null) {
+                        continue;
+                    }
+                    Drawable icon = item.getIcon();
                     if (icon != null) {
                         icon.setAlpha(255);
                         if (item.getItemId() == R.id.action_share && onTablet) {
@@ -114,10 +122,10 @@ public class BloclyActivity extends ActionBarActivity
                 for (int i = 0; i < menu.size(); i++) {
                     MenuItem item = menu.getItem(i);
                     if (item.getItemId() == R.id.action_share
-                        && expandedItem == null) {
-                            continue;
-                        }
-                        Drawable icon = item.getIcon();
+                            && expandedItem == null) {
+                        continue;
+                    }
+                    Drawable icon = item.getIcon();
                     if (icon != null) {
                         icon.setAlpha((int) ((1f - slideOffset) * 255));
                         if (item.getItemId() == R.id.action_share && onTablet) {
@@ -157,16 +165,28 @@ public class BloclyActivity extends ActionBarActivity
             @Override
             public void onSuccess(List<RssFeed> rssFeeds) {
                 allFeeds.addAll(rssFeeds);
+                Log.v("ALL FEEDS", allFeeds.size() + "");
                 navigationDrawerAdapter.notifyDataSetChanged();
-                getFragmentManager()
-                        .beginTransaction()
-                        .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(rssFeeds.get(0)))
-                        .commit();
+                if (currentFeed == null) {
+                    currentFeed = rssFeeds.get(0);
+                    getFragmentManager()
+                            .beginTransaction()
+                            .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(currentFeed))
+                            .commit();
+                }
             }
 
             @Override
-            public void onError(String errorMessage) {}
+            public void onError(String errorMessage) {
+            }
         });
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelable(BUNDLE_EXTRA_CURRENT_FEED, currentFeed);
     }
 
     @Override
@@ -221,11 +241,13 @@ public class BloclyActivity extends ActionBarActivity
     @Override
     public void didSelectNavigationOption(NavigationDrawerAdapter adapter, NavigationDrawerAdapter.NavigationOption navigationOption) {
         drawerLayout.closeDrawers();
+        Log.v("NAVG", "I clicked here");
         Toast.makeText(this, "Show the " + navigationOption.name(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void didSelectFeed(NavigationDrawerAdapter adapter, RssFeed rssFeed) {
+        currentFeed = rssFeed;
         drawerLayout.closeDrawers();
         Toast.makeText(this, "Show RSS items from " + rssFeed.getTitle(), Toast.LENGTH_SHORT).show();
     }

@@ -27,7 +27,6 @@ public class BloclyApplication extends Application {
     private static BloclyApplication sharedInstance;
     private DataSource dataSource;
 
-    // #3
     @Override
     public void onCreate() {
         super.onCreate();

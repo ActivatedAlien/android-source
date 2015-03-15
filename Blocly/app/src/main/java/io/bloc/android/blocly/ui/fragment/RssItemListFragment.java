@@ -51,6 +51,7 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
     private List<RssItem> currentItems = new ArrayList<RssItem>();
 
     private WeakReference<Delegate> delegate;
+    private boolean wasRotated;
 
     @Override
     public void onAttach(Activity activity) {
@@ -77,8 +78,15 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
             }
 
             @Override
-            public void onError(String errorMessage) {}
+            public void onError(String errorMessage) {
+            }
         });
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelable(BUNDLE_EXTRA_RSS_FEED, currentFeed);
     }
 
     public ItemAdapter getItemAdapterWithDelegate() {
@@ -87,7 +95,6 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
         temp.setDelegate(this);
         return temp;
     }
-
 
     @Nullable
     @Override
@@ -99,8 +106,30 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
+    public void onActivityCreated(final Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null) {
+            currentFeed = savedInstanceState.getParcelable(BUNDLE_EXTRA_RSS_FEED);
+        }
+
+        if (currentFeed != null) {
+            BloclyApplication.getSharedDataSource().fetchItemsForFeed(currentFeed,
+                    new DataSource.Callback<List<RssItem>>() {
+                        @Override
+                        public void onSuccess(List<RssItem> rssItems) {
+                            if (getActivity() == null) {
+                                return;
+                            }
+                            currentItems.addAll(0, rssItems);
+                            itemAdapter.notifyItemRangeInserted(0, rssItems.size());
+                        }
+
+                        @Override
+                        public void onError(String errorMessage) {
+                        }
+                    });
+        }
+
         swipeRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.primary));
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
