@@ -14,7 +14,9 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.BuildConfig;
+import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.model.RssFeed;
 import io.bloc.android.blocly.api.model.RssItem;
 import io.bloc.android.blocly.api.model.database.DatabaseOpenHelper;
@@ -37,6 +39,7 @@ public class DataSource {
     private RssFeedTable rssFeedTable;
     private RssItemTable rssItemTable;
     private ExecutorService executorService;
+    private List<RssItem> testItems;
 
     public DataSource(Context context) {
         rssFeedTable = new RssFeedTable();
@@ -44,9 +47,12 @@ public class DataSource {
         executorService = Executors.newSingleThreadExecutor();
         databaseOpenHelper = new DatabaseOpenHelper(context,
                 rssFeedTable, rssItemTable);
+        testItems = new ArrayList<RssItem>();
+
         if (BuildConfig.DEBUG && true) {
             context.deleteDatabase("blocly_db");
             SQLiteDatabase writableDatabase = databaseOpenHelper.getWritableDatabase();
+            /*
             new RssFeedTable.Builder()
                     .setTitle("AndroidCentral")
                     .setDescription("AndroidCentral - Android News, Tips, and stuff!")
@@ -64,7 +70,8 @@ public class DataSource {
                     .setDescription("Game news, reviews, and awesomeness")
                     .setSiteURL("http://kotaku.com")
                     .setFeedURL("http://feeds.gawker.com/kotaku/full#_ga=1.41426146.1734638996.1420673722")
-                    .insert(writableDatabase);
+                    .insert(writableDatabase);*/
+            createFakeData(writableDatabase);
         }
     }
 
@@ -150,29 +157,39 @@ public class DataSource {
         submitTask(new Runnable() {
             @Override
             public void run() {
-                GetFeedsNetworkRequest getFeedsNetworkRequest = new GetFeedsNetworkRequest(rssFeed.getFeedUrl());
-                final List<RssItem> newItems = new ArrayList<RssItem>();
-                List<GetFeedsNetworkRequest.FeedResponse> feedResponses = getFeedsNetworkRequest.performRequest();
-                if (checkForError(getFeedsNetworkRequest, callbackThreadHandler, callback)) {
-                    return;
-                }
-                GetFeedsNetworkRequest.FeedResponse feedResponse = feedResponses.get(0);
-                for (GetFeedsNetworkRequest.ItemResponse itemResponse : feedResponse.channelItems) {
-                    if (RssItemTable.hasItem(databaseOpenHelper.getReadableDatabase(), itemResponse.itemGUID)) {
-                        continue;
+                if (testItems.isEmpty()) {
+                    GetFeedsNetworkRequest getFeedsNetworkRequest = new GetFeedsNetworkRequest(rssFeed.getFeedUrl());
+                    final List<RssItem> newItems = new ArrayList<RssItem>();
+                    List<GetFeedsNetworkRequest.FeedResponse> feedResponses = getFeedsNetworkRequest.performRequest();
+                    if (checkForError(getFeedsNetworkRequest, callbackThreadHandler, callback)) {
+                        return;
                     }
-                    long newItemRowId = insertResponseToDatabase(rssFeed.getRowId(), itemResponse);
-                    Cursor newItemCursor = rssItemTable.fetchRow(databaseOpenHelper.getReadableDatabase(), newItemRowId);
-                    newItemCursor.moveToFirst();
-                    newItems.add(itemFromCursor(newItemCursor));
-                    newItemCursor.close();
-                }
-                callbackThreadHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(newItems);
+                    GetFeedsNetworkRequest.FeedResponse feedResponse = feedResponses.get(0);
+                    for (GetFeedsNetworkRequest.ItemResponse itemResponse : feedResponse.channelItems) {
+                        if (RssItemTable.hasItem(databaseOpenHelper.getReadableDatabase(), itemResponse.itemGUID)) {
+                            continue;
+                        }
+                        long newItemRowId = insertResponseToDatabase(rssFeed.getRowId(), itemResponse);
+                        Cursor newItemCursor = rssItemTable.fetchRow(databaseOpenHelper.getReadableDatabase(), newItemRowId);
+                        newItemCursor.moveToFirst();
+                        newItems.add(itemFromCursor(newItemCursor));
+                        newItemCursor.close();
                     }
-                });
+
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onSuccess(newItems);
+                        }
+                    });
+                } else {
+                    callbackThreadHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onSuccess(testItems);
+                        }
+                    });
+                }
             }
         });
     }
@@ -327,5 +344,37 @@ public class DataSource {
                 .setPubDate(itemPubDate)
                 .setRSSFeed(feedId)
                 .insert(databaseOpenHelper.getWritableDatabase());
+    }
+
+    void createFakeData(SQLiteDatabase writableDatabase) {
+        long newFeedId = new RssFeedTable.Builder()
+                .setTitle("My Favorite Feed")
+                .setDescription("This feed is just incredible, I can't even begin to tell you…")
+                .setSiteURL("http://favoritefeed.net")
+                .setFeedURL("http://feeds.feedburner.com/favorite_feed?format=xml")
+                .insert(writableDatabase);
+
+        long itemPubDate = System.currentTimeMillis();
+
+        for (int i = 0; i < 10; i++) {
+            RssItem rssItem = new RssItem(i, String.valueOf(i),
+                    BloclyApplication.getSharedInstance().getString(R.string.placeholder_headline) + " " + i,
+                    BloclyApplication.getSharedInstance().getString(R.string.placeholder_content),
+                    "http://favoritefeed.net?story_id=an-incredible-news-story",
+                    "http://www.androidwallpaperfree.com/wp-content/uploads/2012/10/Grass-at-night.jpg",
+                    newFeedId, System.currentTimeMillis(), false, false);
+
+            testItems.add(rssItem);
+
+            new RssItemTable.Builder()
+                    .setTitle(rssItem.getTitle())
+                    .setDescription(rssItem.getDescription())
+                    .setGUID(rssItem.getGuid())
+                    .setLink(rssItem.getUrl())
+                    .setRSSFeed(rssItem.getRssFeedId())
+                    .setFavorite(rssItem.isFavorite() ? 0 : 1)
+                    .setPubDate(itemPubDate)
+                    .insert(databaseOpenHelper.getWritableDatabase());
+        }
     }
 }
