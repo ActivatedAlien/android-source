@@ -94,6 +94,26 @@ public class RssItemListFragment extends Fragment implements ItemAdapter.DataSou
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        BloclyApplication.getSharedDataSource().fetchNewItemsForFeed(currentFeed,
+                new DataSource.Callback<List<RssItem>>() {
+                    @Override
+                    public void onSuccess(List<RssItem> rssItems) {
+                        if (getActivity() == null) {
+                            return;
+                        }
+                        if (!rssItems.isEmpty()) {
+                            currentItems.addAll(0, rssItems);
+                            itemAdapter.notifyItemRangeInserted(0, rssItems.size());
+                        }
+                        //swipeRefreshLayout.setRefreshing(false);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        //swipeRefreshLayout.setRefreshing(false);
+                    }
+                });
+
         swipeRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.primary));
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override

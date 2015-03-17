@@ -321,8 +321,19 @@ public class DataSource {
                 .setGUID(rssItem.getGuid())
                 .setLink(rssItem.getUrl())
                 .setRSSFeed(rssItem.getRssFeedId())
-                .setFavorite(rssItem.isFavorite() ? 0 : 1)
+                .setFavorite(rssItem.isFavorite() ? 1 : 0)
                 .updateForId(databaseOpenHelper.getWritableDatabase(), rssItem.getGuid());
+    }
+
+    public boolean getFavoriteColumn(long rowId) {
+        Cursor cursor = rssItemTable.fetchRow(databaseOpenHelper.getReadableDatabase(), rowId);
+        if (cursor.moveToFirst()) {
+            final RssItem rssItem = itemFromCursor(cursor);
+            cursor.close();
+            return rssItem.isFavorite();
+        } else {
+            throw new RuntimeException("Invalid id");
+        }
     }
 
 
@@ -362,19 +373,28 @@ public class DataSource {
                     BloclyApplication.getSharedInstance().getString(R.string.placeholder_content),
                     "http://favoritefeed.net?story_id=an-incredible-news-story",
                     "http://www.androidwallpaperfree.com/wp-content/uploads/2012/10/Grass-at-night.jpg",
-                    newFeedId, System.currentTimeMillis(), false, false);
+                    newFeedId, itemPubDate, false, false);
 
-            testItems.add(rssItem);
 
-            new RssItemTable.Builder()
+            long rowId = new RssItemTable.Builder()
                     .setTitle(rssItem.getTitle())
                     .setDescription(rssItem.getDescription())
                     .setGUID(rssItem.getGuid())
                     .setLink(rssItem.getUrl())
                     .setRSSFeed(rssItem.getRssFeedId())
-                    .setFavorite(rssItem.isFavorite() ? 0 : 1)
+                    .setFavorite(rssItem.isFavorite() ? 1 : 0)
                     .setPubDate(itemPubDate)
                     .insert(databaseOpenHelper.getWritableDatabase());
+
+            rssItem = new RssItem(rowId, String.valueOf(i),
+                    BloclyApplication.getSharedInstance().getString(R.string.placeholder_headline) + " " + i,
+                    BloclyApplication.getSharedInstance().getString(R.string.placeholder_content),
+                    "http://favoritefeed.net?story_id=an-incredible-news-story",
+                    "http://www.androidwallpaperfree.com/wp-content/uploads/2012/10/Grass-at-night.jpg",
+                    newFeedId, itemPubDate, false, false);
+
+            testItems.add(rssItem);
+
         }
     }
 }
